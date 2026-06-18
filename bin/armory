@@ -133,6 +133,7 @@ cmd_search() {
 
 cmd_info() {
   ensure_index
+  [ -z "${1:-}" ] && die "usage: armory info <tool>"
   local t; t="$(tool_json "$1")" || die "unknown tool: $1"
   printf '%s%s%s  %s\n' "$C_B" "$(jq -r .name <<<"$t")" "$C_RST" "$(jq -r .version <<<"$t")"
   printf '  %s\n' "$(jq -r .description <<<"$t")"
@@ -169,9 +170,9 @@ _install_file() {
   return 0
 }
 
-cmd_install() {
+cmd_get() {
   ensure_index
-  [ $# -gt 0 ] || die "usage: armory install <tool> [tool...] [--os all|linux|windows]"
+  [ $# -gt 0 ] || die "usage: armory get <tool> [tool...] [--os all|linux|windows]"
   local names=()
   while [ $# -gt 0 ]; do
     case "$1" in --os) OS_FILTER="$2"; shift 2 ;; *) names+=("$1"); shift ;; esac
@@ -179,7 +180,7 @@ cmd_install() {
   for name in "${names[@]}"; do
     local t; t="$(tool_json "$name")" || { warn "unknown tool: $name"; continue; }
     local sz; sz="$(jq -r '.size_note//""' <<<"$t")"; [ -n "$sz" ] && warn "$name is heavy: $sz"
-    info "installing $name (os=$OS_FILTER)"
+    info "getting $name (os=$OS_FILTER)"
     local dir="$STORE/$name"; mkdir -p "$dir"
     local n; n="$(jq '.files|length' <<<"$t")"
     for i in $(seq 0 $((n-1))); do _install_file "$dir" "$(jq -c ".files[$i]" <<<"$t")" || true; done
@@ -196,7 +197,7 @@ cmd_bundle() {
   local b; b="$(jq -e --arg n "$1" '.bundles[]|select(.name==$n)' "$INDEX")" \
     || die "unknown bundle: $1 (run 'armory bundle' to list)"
   info "bundle $1: $(jq -r .description <<<"$b")"
-  mapfile -t tools < <(jq -r '.tools[]' <<<"$b"); cmd_install "${tools[@]}"
+  mapfile -t tools < <(jq -r '.tools[]' <<<"$b"); cmd_get "${tools[@]}"
 }
 
 cmd_remove() {
@@ -210,7 +211,7 @@ cmd_remove() {
 }
 
 cmd_installed() {
-  info "installed (vault: $ARMORY_ROOT)"
+  info "downloaded (vault: $ARMORY_ROOT)"
   jq -r 'to_entries[] | "  \(.key)\t\(.value.version)\t\(.value.at)"' "$INSTALLED" \
     | column -t -s $'\t' 2>/dev/null || jq -r 'keys[]' "$INSTALLED" | sed 's/^/  /'
 }
@@ -220,7 +221,7 @@ cmd_import() {
   local c2="${1:-}" name="${2:-}"
   [ -n "$c2" ] && [ -n "$name" ] || die "usage: armory import <sliver|adaptix> <tool>"
   local dir="$STORE/$name"
-  [ -d "$dir" ] || die "$name is not installed; run: armory install $name"
+  [ -d "$dir" ] || die "$name is not downloaded; run: armory get $name"
   local t; t="$(tool_json "$name")" || die "unknown tool: $name"
   local cdir cnote
   cdir="$(jq -r --arg k "$c2" '.c2[$k].dir // ""' <<<"$t")"
@@ -240,8 +241,8 @@ ${C_B}usage${C_RST}  armory <command> [args]
   ${C_CY}search${C_RST} [q]        fuzzy-search the index (no q + fzf = interactive)
   ${C_CY}list${C_RST}   [cat]      list categories, or tools in a category
   ${C_CY}info${C_RST}   <tool>     show details + files before downloading
-  ${C_CY}install${C_RST} <t...>    fetch only those tools  [--os all|linux|windows]
-  ${C_CY}bundle${C_RST} [name]     install a themed group (no name = list bundles)
+  ${C_CY}get${C_RST}    <t...>     download tools (self-contained)  [--os all|linux|windows]
+  ${C_CY}bundle${C_RST} [name]     download a themed group (no name = list bundles)
   ${C_CY}import${C_RST} <c2> <t>   wire a tool's files into sliver/adaptix
   ${C_CY}installed${C_RST}         what you have locally
   ${C_CY}rm${C_RST}     <tool>     remove a tool
@@ -260,7 +261,7 @@ main() {
     list|ls)            cmd_list "$@" ;;
     search|s|find)      cmd_search "$@" ;;
     info|show)          cmd_info "$@" ;;
-    install|add|get|i)  cmd_install "$@" ;;
+    get|download|add|i) cmd_get "$@" ;;
     bundle|pack)        cmd_bundle "$@" ;;
     import)             cmd_import "$@" ;;
     installed|status)   cmd_installed ;;
