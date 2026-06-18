@@ -1,0 +1,12 @@
+name: linpeas
+category: enumeration
+version: "latest"
+description: Linux local privilege escalation enumeration script (PEASS-ng).
+tags: [privesc, enum, linux, peass]
+homepage: https://github.com/peass-ng/PEASS-ng
+files:
+  # Example of pulling straight from upstream with https:// - no re-hosting needed.
+  - dest: linpeas.sh
+    os: any
+    exec: true
+    url: https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh

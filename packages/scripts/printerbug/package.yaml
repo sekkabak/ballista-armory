@@ -1,0 +1,12 @@
+name: printerbug
+category: scripts
+version: "1.0"
+description: Trigger the MS-RPRN PrinterBug to coerce SMB auth from a target (impacket-based).
+tags: [ad, coerce, relay, printerbug, python]
+homepage: https://github.com/dirkjanm/krbrelayx
+files:
+  # Example of a small script committed directly in this repo and served via raw://.
+  - dest: printerbug.py
+    os: any
+    exec: true
+    url: raw://packages/scripts/printerbug/printerbug.py

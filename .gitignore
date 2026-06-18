@@ -1,3 +1,7 @@
-./transfer
-transfer/*
-./transfer/*
+# downloaded tools live inside the vault but are never committed
+/store/
+# heavy assets live in GitHub Releases, not git
+*.exe
+*.zip
+*.tar.gz
+*.7z

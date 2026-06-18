@@ -1,0 +1,275 @@
+#!/usr/bin/env bash
+# armory - a tiny, PORTABLE package manager for your pentest/CTF vault.
+# Everything (manifests, index, downloaded tools) lives inside the armory
+# folder itself, so you can drop the folder on a USB stick / new box and it
+# just works. The manager finds its own folder by resolving its real path,
+# even when invoked through a symlink in your PATH.
+set -euo pipefail
+
+# ---- locate the vault root (this script lives in <root>/bin/armory) ---------
+# Resolve symlinks portably (works on Linux & macOS, no readlink -f needed).
+_src="${BASH_SOURCE[0]}"
+while [ -h "$_src" ]; do
+  _dir="$(cd -P "$(dirname "$_src")" >/dev/null 2>&1 && pwd)"
+  _src="$(readlink "$_src")"; [ "${_src:0:1}" != "/" ] && _src="$_dir/$_src"
+done
+_bindir="$(cd -P "$(dirname "$_src")" >/dev/null 2>&1 && pwd)"
+ARMORY_ROOT="${ARMORY_ROOT:-$(cd "$_bindir/.." >/dev/null 2>&1 && pwd)}"
+
+# ---- everything is relative to the root = self-contained --------------------
+STORE="$ARMORY_ROOT/store"            # downloaded tools (gitignored)
+BIN="$STORE/.bin"                     # symlinks to executables (put on PATH)
+INDEX="$ARMORY_ROOT/index.json"       # committed, read locally - no fetch needed
+INSTALLED="$STORE/installed.json"
+VERSION="0.2.0"
+
+mkdir -p "$STORE" "$BIN"
+[ -f "$INSTALLED" ] || echo '{}' > "$INSTALLED"
+
+# ---------------------------------------------------------------- pretty -----
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  C_RST=$'\e[0m'; C_DIM=$'\e[2m'; C_B=$'\e[1m'
+  C_CY=$'\e[36m'; C_GR=$'\e[32m'; C_YE=$'\e[33m'; C_RD=$'\e[31m'; C_MG=$'\e[35m'
+else
+  C_RST=""; C_DIM=""; C_B=""; C_CY=""; C_GR=""; C_YE=""; C_RD=""; C_MG=""
+fi
+HAVE_FZF=0; command -v fzf >/dev/null 2>&1 && HAVE_FZF=1
+
+say()  { printf '%s\n' "$*"; }
+info() { printf '%s::%s %s\n' "$C_CY$C_B" "$C_RST" "$*"; }
+ok()   { printf '%s ok %s %s\n' "$C_GR$C_B" "$C_RST" "$*"; }
+warn() { printf '%s !! %s %s\n' "$C_YE$C_B" "$C_RST" "$*" >&2; }
+die()  { printf '%s xx %s %s\n' "$C_RD$C_B" "$C_RST" "$*" >&2; exit 1; }
+
+need() { command -v "$1" >/dev/null 2>&1 || die "missing dependency: $1"; }
+need curl; need jq
+
+banner() {
+  printf '%s' "$C_MG$C_B"
+  cat <<'B'
+   ___ _ __ _ __  ___ _ _ _  _
+  / _ \ '__| '  \/ _ \ '_| || |
+  \___/_|  |_|_|_\___/_|  \_, |
+                          |__/   ballista-armory
+B
+  printf '%s\n' "$C_RST"
+}
+
+# -------------------------------------------------------------- platform -----
+detect_os() {
+  case "$(uname -s)" in
+    Linux*)  echo linux ;;
+    Darwin*) echo linux ;;
+    MINGW*|MSYS*|CYGWIN*) echo windows ;;
+    *) echo linux ;;
+  esac
+}
+OS_FILTER="$(detect_os)"
+
+# ----------------------------------------------------------------- index -----
+ensure_index() {
+  [ -f "$INDEX" ] || die "no index.json in $ARMORY_ROOT - run 'armory update' or re-download the vault"
+  jq -e . "$INDEX" >/dev/null 2>&1 || die "index.json is not valid json"
+}
+idx() { jq -r "$1" "$INDEX"; }
+
+cmd_update() {
+  if [ -d "$ARMORY_ROOT/.git" ] && command -v git >/dev/null 2>&1; then
+    info "git pull in $ARMORY_ROOT"
+    git -C "$ARMORY_ROOT" pull --ff-only && ok "vault updated"
+  else
+    ensure_index
+    local owner repo branch url
+    owner="$(idx '.owner')"; repo="$(idx '.repo')"; branch="$(idx '.branch')"
+    url="https://raw.githubusercontent.com/$owner/$repo/$branch/index.json"
+    info "fetching index from $url"
+    curl -fsSL "$url" -o "$INDEX.tmp" || die "could not fetch index"
+    jq -e . "$INDEX.tmp" >/dev/null 2>&1 || die "fetched index is not valid json"
+    mv "$INDEX.tmp" "$INDEX"; ok "index updated ($(idx '.tools|length') tools)"
+  fi
+}
+
+resolve_url() {
+  local u="$1" rb raw
+  rb="$(idx '.release_base')"; raw="$(idx '.raw_base')"
+  case "$u" in
+    release://*) echo "$rb/${u#release://}" ;;
+    raw://*)     echo "$raw/${u#raw://}" ;;
+    *)           echo "$u" ;;
+  esac
+}
+tool_json() { jq -e --arg n "$1" '.tools[] | select(.name==$n)' "$INDEX" 2>/dev/null; }
+
+# --------------------------------------------------------------- commands ----
+cmd_list() {
+  ensure_index
+  local cat="${1:-}"
+  if [ -n "$cat" ]; then
+    info "tools in '$cat'"
+    idx ".tools[] | select(.category==\"$cat\") | \"  \(.name)\t\(.description)\""
+  else
+    info "categories"; idx '.tools[].category' | sort -u | sed 's/^/  /'; echo
+    info "tools"
+    idx '.tools[] | "  \(.category)/\(.name)\t\(.description)"' | column -t -s $'\t' 2>/dev/null \
+      || idx '.tools[] | "  \(.category)/\(.name)  -  \(.description)"'
+  fi
+}
+
+cmd_search() {
+  ensure_index
+  local q="${*:-}" rows
+  rows="$(idx '.tools[] | "\(.name)	\(.category)	\(.description)	\(.tags|join(","))"')"
+  if [ -z "$q" ] && [ "$HAVE_FZF" = 1 ]; then
+    local pick
+    pick="$(printf '%s\n' "$rows" | fzf --with-nth=1,2,3 --delimiter=$'\t' \
+            --prompt='armory> ' --header='enter = info' | cut -f1)" || return 0
+    [ -n "$pick" ] && cmd_info "$pick"; return 0
+  fi
+  printf '%s\n' "$rows" | grep -i -- "$q" 2>/dev/null \
+    | awk -F'\t' -v c="$C_B" -v r="$C_RST" -v d="$C_DIM" \
+        '{printf "  %s%-18s%s %s %s[%s]%s\n", c,$1,r,$3,d,$4,r}' \
+    || warn "no matches for: $q"
+}
+
+cmd_info() {
+  ensure_index
+  local t; t="$(tool_json "$1")" || die "unknown tool: $1"
+  printf '%s%s%s  %s\n' "$C_B" "$(jq -r .name <<<"$t")" "$C_RST" "$(jq -r .version <<<"$t")"
+  printf '  %s\n' "$(jq -r .description <<<"$t")"
+  printf '  %scategory%s %s   %stags%s %s\n' "$C_DIM" "$C_RST" "$(jq -r .category <<<"$t")" \
+         "$C_DIM" "$C_RST" "$(jq -r '.tags|join(", ")' <<<"$t")"
+  [ "$(jq -r '.homepage//""' <<<"$t")" != "" ] && \
+    printf '  %shome%s     %s\n' "$C_DIM" "$C_RST" "$(jq -r .homepage <<<"$t")"
+  [ "$(jq -r '.size_note//""' <<<"$t")" != "" ] && \
+    printf '  %ssize%s     %s\n' "$C_YE" "$C_RST" "$(jq -r .size_note <<<"$t")"
+  echo "  files:"
+  jq -r '.files[] | "    \(.dest)\t[\(.os // "any")]\t\(.url)"' <<<"$t" \
+    | column -t -s $'\t' 2>/dev/null || jq -r '.files[] | "    \(.dest)  \(.url)"' <<<"$t"
+}
+
+_install_file() {
+  local dir="$1" f="$2" dest url os exec_flag unpack abs
+  dest="$(jq -r .dest <<<"$f")"; os="$(jq -r '.os // "any"' <<<"$f")"
+  exec_flag="$(jq -r '.exec // false' <<<"$f")"; unpack="$(jq -r '.unpack // ""' <<<"$f")"
+  url="$(resolve_url "$(jq -r .url <<<"$f")")"
+  if [ "$OS_FILTER" != "all" ] && [ "$os" != "any" ] && [ "$os" != "$OS_FILTER" ]; then return 0; fi
+  abs="$dir/$dest"
+  printf '   -> %s %s(%s)%s\n' "$dest" "$C_DIM" "$os" "$C_RST"
+  curl -fL# "$url" -o "$abs" || { warn "failed: $url"; return 1; }
+  case "$unpack" in
+    tar.gz) tar -xzf "$abs" -C "$dir" && rm -f "$abs" ;;
+    zip)    (cd "$dir" && unzip -oq "$dest") && rm -f "$abs" ;;
+    gz)     gunzip -f "$abs" ;;
+  esac
+  if [ "$exec_flag" = "true" ] && [ -f "$abs" ]; then
+    chmod +x "$abs"
+    # RELATIVE symlink so it survives moving the whole vault folder
+    ln -sf "../$(basename "$dir")/$dest" "$BIN/$dest"
+  fi
+  return 0
+}
+
+cmd_install() {
+  ensure_index
+  [ $# -gt 0 ] || die "usage: armory install <tool> [tool...] [--os all|linux|windows]"
+  local names=()
+  while [ $# -gt 0 ]; do
+    case "$1" in --os) OS_FILTER="$2"; shift 2 ;; *) names+=("$1"); shift ;; esac
+  done
+  for name in "${names[@]}"; do
+    local t; t="$(tool_json "$name")" || { warn "unknown tool: $name"; continue; }
+    local sz; sz="$(jq -r '.size_note//""' <<<"$t")"; [ -n "$sz" ] && warn "$name is heavy: $sz"
+    info "installing $name (os=$OS_FILTER)"
+    local dir="$STORE/$name"; mkdir -p "$dir"
+    local n; n="$(jq '.files|length' <<<"$t")"
+    for i in $(seq 0 $((n-1))); do _install_file "$dir" "$(jq -c ".files[$i]" <<<"$t")" || true; done
+    tmp="$(mktemp)"; jq --arg n "$name" --arg v "$(jq -r .version <<<"$t")" \
+      '.[$n]={version:$v, at:(now|todateiso8601)}' "$INSTALLED" > "$tmp" && mv "$tmp" "$INSTALLED"
+    ok "$name -> $dir"
+  done
+  say "${C_DIM}executables symlinked in:${C_RST} $BIN"
+}
+
+cmd_bundle() {
+  ensure_index
+  [ $# -gt 0 ] || { idx '.bundles[] | "  \(.name)\t\(.description)"' | column -t -s $'\t'; return 0; }
+  local b; b="$(jq -e --arg n "$1" '.bundles[]|select(.name==$n)' "$INDEX")" \
+    || die "unknown bundle: $1 (run 'armory bundle' to list)"
+  info "bundle $1: $(jq -r .description <<<"$b")"
+  mapfile -t tools < <(jq -r '.tools[]' <<<"$b"); cmd_install "${tools[@]}"
+}
+
+cmd_remove() {
+  [ $# -gt 0 ] || die "usage: armory rm <tool>"
+  for name in "$@"; do
+    rm -rf "${STORE:?}/$name"
+    find "$BIN" -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+    tmp="$(mktemp)"; jq --arg n "$name" 'del(.[$n])' "$INSTALLED" > "$tmp" && mv "$tmp" "$INSTALLED"
+    ok "removed $name"
+  done
+}
+
+cmd_installed() {
+  info "installed (vault: $ARMORY_ROOT)"
+  jq -r 'to_entries[] | "  \(.key)\t\(.value.version)\t\(.value.at)"' "$INSTALLED" \
+    | column -t -s $'\t' 2>/dev/null || jq -r 'keys[]' "$INSTALLED" | sed 's/^/  /'
+}
+
+cmd_import() {
+  ensure_index
+  local c2="${1:-}" name="${2:-}"
+  [ -n "$c2" ] && [ -n "$name" ] || die "usage: armory import <sliver|adaptix> <tool>"
+  local dir="$STORE/$name"
+  [ -d "$dir" ] || die "$name is not installed; run: armory install $name"
+  local t; t="$(tool_json "$name")" || die "unknown tool: $name"
+  local cdir cnote
+  cdir="$(jq -r --arg k "$c2" '.c2[$k].dir // ""' <<<"$t")"
+  cnote="$(jq -r --arg k "$c2" '.c2[$k].note // ""' <<<"$t")"
+  if [ -z "$cdir" ] && [ -z "$cnote" ]; then
+    warn "$name has no $c2 import hints in its manifest"; say "files are here: $dir"; return 0
+  fi
+  if [ -n "$cdir" ]; then cdir="${cdir/#\~/$HOME}"; mkdir -p "$cdir"; cp -rv "$dir"/. "$cdir"/; ok "copied $name -> $cdir"; fi
+  [ -n "$cnote" ] && info "$c2: $cnote"
+}
+
+cmd_help() {
+  banner
+  cat <<H
+${C_B}usage${C_RST}  armory <command> [args]
+
+  ${C_CY}search${C_RST} [q]        fuzzy-search the index (no q + fzf = interactive)
+  ${C_CY}list${C_RST}   [cat]      list categories, or tools in a category
+  ${C_CY}info${C_RST}   <tool>     show details + files before downloading
+  ${C_CY}install${C_RST} <t...>    fetch only those tools  [--os all|linux|windows]
+  ${C_CY}bundle${C_RST} [name]     install a themed group (no name = list bundles)
+  ${C_CY}import${C_RST} <c2> <t>   wire a tool's files into sliver/adaptix
+  ${C_CY}installed${C_RST}         what you have locally
+  ${C_CY}rm${C_RST}     <tool>     remove a tool
+  ${C_CY}update${C_RST}            git pull the vault (or refresh index.json)
+  ${C_CY}path${C_RST}              print the bin dir to add to PATH
+  ${C_CY}root${C_RST}              print the vault folder
+
+${C_DIM}portable vault:${C_RST} $ARMORY_ROOT
+H
+}
+
+main() {
+  local cmd="${1:-help}"; shift || true
+  case "$cmd" in
+    update)             cmd_update "$@" ;;
+    list|ls)            cmd_list "$@" ;;
+    search|s|find)      cmd_search "$@" ;;
+    info|show)          cmd_info "$@" ;;
+    install|add|get|i)  cmd_install "$@" ;;
+    bundle|pack)        cmd_bundle "$@" ;;
+    import)             cmd_import "$@" ;;
+    installed|status)   cmd_installed ;;
+    rm|remove|uninstall)cmd_remove "$@" ;;
+    path)               echo "$BIN" ;;
+    root)               echo "$ARMORY_ROOT" ;;
+    version|--version)  echo "armory $VERSION" ;;
+    help|-h|--help)     cmd_help ;;
+    *) warn "unknown command: $cmd"; cmd_help; exit 1 ;;
+  esac
+}
+main "$@"

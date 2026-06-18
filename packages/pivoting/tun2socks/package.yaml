@@ -1,0 +1,17 @@
+name: tun2socks
+category: pivoting
+version: "2.5.2"
+description: tun2socks - route any TCP/UDP traffic through a SOCKS5 proxy via a TUN device.
+tags: [tunnel, pivot, socks, tun]
+homepage: https://github.com/xjasonlyu/tun2socks
+files:
+  - dest: tun2socks
+    os: linux
+    arch: amd64
+    exec: true
+    url: release://binaries/tun2socks_2.5.2_linux_amd64
+  - dest: tun2socks.exe
+    os: windows
+    arch: amd64
+    exec: false
+    url: release://binaries/tun2socks_2.5.2_windows_amd64.exe

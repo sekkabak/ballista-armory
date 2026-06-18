@@ -1,0 +1,5 @@
+name: recon-pack
+description: Local enumeration and privesc on a fresh foothold.
+tools:
+  - linpeas
+  - winpeas

@@ -1,0 +1,13 @@
+name: seclists
+category: wordlists
+version: "2024.3"
+description: The security tester's companion - a huge collection of wordlists. Heavy; ~1GB.
+tags: [wordlist, fuzzing, passwords, usernames, discovery]
+homepage: https://github.com/danielmiessler/SecLists
+size_note: "~1GB compressed - install only when you need it."
+files:
+  - dest: seclists.tar.gz
+    os: any
+    exec: false
+    unpack: tar.gz
+    url: release://wordlists/seclists-2024.3.tar.gz

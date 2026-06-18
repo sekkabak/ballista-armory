@@ -1,0 +1,6 @@
+name: pivot-pack
+description: Get off the beachhead - tunneling and pivoting.
+tools:
+  - chisel
+  - ligolo-ng
+  - tun2socks

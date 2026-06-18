@@ -1,0 +1,18 @@
+# Top-level armory configuration.
+# The manager and the index generator both read this.
+owner: sekkabak
+repo: ballista-armory
+branch: main
+
+# Where heavy assets (binaries, BOFs, wordlists) live.
+# Files referenced as  release://<tag>/<filename>  resolve to:
+#   https://github.com/<owner>/<repo>/releases/download/<tag>/<filename>
+release_base: https://github.com/sekkabak/ballista-armory/releases/download
+
+# Where small committed files (scripts) live.
+# Files referenced as  raw://<path>  resolve to:
+#   https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>
+raw_base: https://raw.githubusercontent.com/sekkabak/ballista-armory/main
+
+# Where the generated index lives (manager fetches this for search/list).
+index_url: https://raw.githubusercontent.com/sekkabak/ballista-armory/main/index.json

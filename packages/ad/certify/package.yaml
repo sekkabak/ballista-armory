@@ -1,0 +1,12 @@
+name: certify
+category: ad
+version: "1.1.0"
+description: Enumerate and abuse misconfigurations in Active Directory Certificate Services (AD CS).
+tags: [ad, adcs, certificates, esc, dotnet, windows]
+homepage: https://github.com/GhostPack/Certify
+files:
+  - dest: Certify.exe
+    os: windows
+    arch: amd64
+    exec: false
+    url: release://binaries/Certify_1.1.0.exe

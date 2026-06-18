@@ -1,0 +1,364 @@
+{
+  "schema": 1,
+  "generated": "2026-06-18T08:34:43+00:00",
+  "owner": "sekkabak",
+  "repo": "ballista-armory",
+  "branch": "main",
+  "release_base": "https://github.com/sekkabak/ballista-armory/releases/download",
+  "raw_base": "https://raw.githubusercontent.com/sekkabak/ballista-armory/main",
+  "tools": [
+    {
+      "name": "certify",
+      "category": "ad",
+      "version": "1.1.0",
+      "description": "Enumerate and abuse misconfigurations in Active Directory Certificate Services (AD CS).",
+      "tags": [
+        "ad",
+        "adcs",
+        "certificates",
+        "esc",
+        "dotnet",
+        "windows"
+      ],
+      "homepage": "https://github.com/GhostPack/Certify",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "Certify.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/Certify_1.1.0.exe"
+        }
+      ],
+      "c2": {},
+      "path": "packages/ad/certify"
+    },
+    {
+      "name": "rubeus",
+      "category": "ad",
+      "version": "2.3.2",
+      "description": "C# toolset for raw Kerberos interaction and abuses (asreproast, kerberoast, s4u, ptt).",
+      "tags": [
+        "ad",
+        "kerberos",
+        "ticket",
+        "dotnet",
+        "windows"
+      ],
+      "homepage": "https://github.com/GhostPack/Rubeus",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "Rubeus.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/Rubeus_2.3.2.exe"
+        }
+      ],
+      "c2": {},
+      "path": "packages/ad/rubeus"
+    },
+    {
+      "name": "lazagne",
+      "category": "credentials",
+      "version": "2.4.6",
+      "description": "Retrieve passwords stored on a local machine from many apps/browsers.",
+      "tags": [
+        "creds",
+        "loot",
+        "post-exploitation",
+        "windows"
+      ],
+      "homepage": "https://github.com/AlessandroZ/LaZagne",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "lazagne.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/lazagne_2.4.6.exe"
+        }
+      ],
+      "c2": {},
+      "path": "packages/credentials/lazagne"
+    },
+    {
+      "name": "mimikatz",
+      "category": "credentials",
+      "version": "2.2.0-20220919",
+      "description": "The credential dumping classic. x64 build plus the full release zip.",
+      "tags": [
+        "creds",
+        "dump",
+        "lsass",
+        "dcsync",
+        "kerberos",
+        "windows"
+      ],
+      "homepage": "https://github.com/gentilkiwi/mimikatz",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "mimikatz.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/mimikatz_x64.exe"
+        },
+        {
+          "dest": "mimikatz_trunk.zip",
+          "os": "any",
+          "exec": false,
+          "url": "release://binaries/mimikatz_trunk.zip"
+        }
+      ],
+      "c2": {
+        "note": "For in-memory use prefer the nanodump/safetykatz BOF packages."
+      },
+      "path": "packages/credentials/mimikatz"
+    },
+    {
+      "name": "linpeas",
+      "category": "enumeration",
+      "version": "latest",
+      "description": "Linux local privilege escalation enumeration script (PEASS-ng).",
+      "tags": [
+        "privesc",
+        "enum",
+        "linux",
+        "peass"
+      ],
+      "homepage": "https://github.com/peass-ng/PEASS-ng",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "linpeas.sh",
+          "os": "any",
+          "exec": true,
+          "url": "https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh"
+        }
+      ],
+      "c2": {},
+      "path": "packages/enumeration/linpeas"
+    },
+    {
+      "name": "winpeas",
+      "category": "enumeration",
+      "version": "20240101",
+      "description": "Windows local privilege escalation enumeration (PEASS-ng). x64 + .bat fallback.",
+      "tags": [
+        "privesc",
+        "enum",
+        "windows",
+        "peass"
+      ],
+      "homepage": "https://github.com/peass-ng/PEASS-ng",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "winPEASx64.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/winPEASx64.exe"
+        },
+        {
+          "dest": "winPEAS.bat",
+          "os": "windows",
+          "exec": false,
+          "url": "release://binaries/winPEAS.bat"
+        }
+      ],
+      "c2": {},
+      "path": "packages/enumeration/winpeas"
+    },
+    {
+      "name": "chisel",
+      "category": "pivoting",
+      "version": "1.10.1",
+      "description": "Fast TCP/UDP tunnel over HTTP, single executable. Classic SOCKS pivot.",
+      "tags": [
+        "tunnel",
+        "pivot",
+        "socks",
+        "proxy",
+        "port-forward"
+      ],
+      "homepage": "https://github.com/jpillora/chisel",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "chisel",
+          "os": "linux",
+          "arch": "amd64",
+          "exec": true,
+          "url": "release://binaries/chisel_1.10.1_linux_amd64"
+        },
+        {
+          "dest": "chisel.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/chisel_1.10.1_windows_amd64.exe"
+        }
+      ],
+      "c2": {},
+      "path": "packages/pivoting/chisel"
+    },
+    {
+      "name": "ligolo-ng",
+      "category": "pivoting",
+      "version": "0.7.5",
+      "description": "Tunneling tool using a TUN interface. Modern replacement for chisel/socks pivoting.",
+      "tags": [
+        "tunnel",
+        "pivot",
+        "tun",
+        "proxy",
+        "agent"
+      ],
+      "homepage": "https://github.com/nicocha30/ligolo-ng",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "ligolo-proxy",
+          "os": "linux",
+          "arch": "amd64",
+          "exec": true,
+          "url": "release://binaries/ligolo-proxy_0.7.5_linux_amd64"
+        },
+        {
+          "dest": "ligolo-agent",
+          "os": "linux",
+          "arch": "amd64",
+          "exec": true,
+          "url": "release://binaries/ligolo-agent_0.7.5_linux_amd64"
+        },
+        {
+          "dest": "ligolo-agent.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/ligolo-agent_0.7.5_windows_amd64.exe"
+        }
+      ],
+      "c2": {},
+      "path": "packages/pivoting/ligolo-ng"
+    },
+    {
+      "name": "tun2socks",
+      "category": "pivoting",
+      "version": "2.5.2",
+      "description": "tun2socks - route any TCP/UDP traffic through a SOCKS5 proxy via a TUN device.",
+      "tags": [
+        "tunnel",
+        "pivot",
+        "socks",
+        "tun"
+      ],
+      "homepage": "https://github.com/xjasonlyu/tun2socks",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "tun2socks",
+          "os": "linux",
+          "arch": "amd64",
+          "exec": true,
+          "url": "release://binaries/tun2socks_2.5.2_linux_amd64"
+        },
+        {
+          "dest": "tun2socks.exe",
+          "os": "windows",
+          "arch": "amd64",
+          "exec": false,
+          "url": "release://binaries/tun2socks_2.5.2_windows_amd64.exe"
+        }
+      ],
+      "c2": {},
+      "path": "packages/pivoting/tun2socks"
+    },
+    {
+      "name": "printerbug",
+      "category": "scripts",
+      "version": "1.0",
+      "description": "Trigger the MS-RPRN PrinterBug to coerce SMB auth from a target (impacket-based).",
+      "tags": [
+        "ad",
+        "coerce",
+        "relay",
+        "printerbug",
+        "python"
+      ],
+      "homepage": "https://github.com/dirkjanm/krbrelayx",
+      "size_note": "",
+      "files": [
+        {
+          "dest": "printerbug.py",
+          "os": "any",
+          "exec": true,
+          "url": "raw://packages/scripts/printerbug/printerbug.py"
+        }
+      ],
+      "c2": {},
+      "path": "packages/scripts/printerbug"
+    },
+    {
+      "name": "seclists",
+      "category": "wordlists",
+      "version": "2024.3",
+      "description": "The security tester's companion - a huge collection of wordlists. Heavy; ~1GB.",
+      "tags": [
+        "wordlist",
+        "fuzzing",
+        "passwords",
+        "usernames",
+        "discovery"
+      ],
+      "homepage": "https://github.com/danielmiessler/SecLists",
+      "size_note": "~1GB compressed - install only when you need it.",
+      "files": [
+        {
+          "dest": "seclists.tar.gz",
+          "os": "any",
+          "exec": false,
+          "unpack": "tar.gz",
+          "url": "release://wordlists/seclists-2024.3.tar.gz"
+        }
+      ],
+      "c2": {},
+      "path": "packages/wordlists/seclists"
+    }
+  ],
+  "bundles": [
+    {
+      "name": "ad-pack",
+      "description": "Active Directory attack essentials - Kerberos, ADCS, coercion.",
+      "tools": [
+        "rubeus",
+        "certify",
+        "printerbug",
+        "mimikatz"
+      ]
+    },
+    {
+      "name": "pivot-pack",
+      "description": "Get off the beachhead - tunneling and pivoting.",
+      "tools": [
+        "chisel",
+        "ligolo-ng",
+        "tun2socks"
+      ]
+    },
+    {
+      "name": "recon-pack",
+      "description": "Local enumeration and privesc on a fresh foothold.",
+      "tools": [
+        "linpeas",
+        "winpeas"
+      ]
+    }
+  ]
+}

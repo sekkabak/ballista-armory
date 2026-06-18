@@ -1,0 +1,7 @@
+name: ad-pack
+description: Active Directory attack essentials - Kerberos, ADCS, coercion.
+tools:
+  - rubeus
+  - certify
+  - printerbug
+  - mimikatz

@@ -1,0 +1,24 @@
+name: chisel
+category: pivoting
+version: "1.10.1"
+description: Fast TCP/UDP tunnel over HTTP, single executable. Classic SOCKS pivot.
+tags: [tunnel, pivot, socks, proxy, port-forward]
+homepage: https://github.com/jpillora/chisel
+
+# Each file is fetched only when the tool is installed, and only the entries
+# matching the target OS (unless `armory install chisel --os all`).
+#   url schemes:
+#     release://<tag>/<file>  -> your armory GitHub Release asset
+#     raw://<path>            -> small file committed in this repo
+#     https://...             -> pulled straight from upstream / anywhere
+files:
+  - dest: chisel
+    os: linux
+    arch: amd64
+    exec: true
+    url: release://binaries/chisel_1.10.1_linux_amd64
+  - dest: chisel.exe
+    os: windows
+    arch: amd64
+    exec: false
+    url: release://binaries/chisel_1.10.1_windows_amd64.exe

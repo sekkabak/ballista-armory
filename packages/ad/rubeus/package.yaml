@@ -1,0 +1,12 @@
+name: rubeus
+category: ad
+version: "2.3.2"
+description: C# toolset for raw Kerberos interaction and abuses (asreproast, kerberoast, s4u, ptt).
+tags: [ad, kerberos, ticket, dotnet, windows]
+homepage: https://github.com/GhostPack/Rubeus
+files:
+  - dest: Rubeus.exe
+    os: windows
+    arch: amd64
+    exec: false
+    url: release://binaries/Rubeus_2.3.2.exe

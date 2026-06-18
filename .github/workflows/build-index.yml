@@ -1,0 +1,36 @@
+name: build-index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "bundles/**"
+      - "armory.yaml"
+      - "scripts/build-index.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: pip install pyyaml
+      - run: python3 scripts/build-index.py
+      - name: Commit index.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet index.json; then
+            git add index.json
+            git commit -m "ci: rebuild index.json"
+            git push
+          else
+            echo "index.json unchanged"
+          fi

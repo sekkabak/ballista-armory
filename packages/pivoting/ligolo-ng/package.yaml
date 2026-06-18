@@ -1,0 +1,22 @@
+name: ligolo-ng
+category: pivoting
+version: "0.7.5"
+description: Tunneling tool using a TUN interface. Modern replacement for chisel/socks pivoting.
+tags: [tunnel, pivot, tun, proxy, agent]
+homepage: https://github.com/nicocha30/ligolo-ng
+files:
+  - dest: ligolo-proxy
+    os: linux
+    arch: amd64
+    exec: true
+    url: release://binaries/ligolo-proxy_0.7.5_linux_amd64
+  - dest: ligolo-agent
+    os: linux
+    arch: amd64
+    exec: true
+    url: release://binaries/ligolo-agent_0.7.5_linux_amd64
+  - dest: ligolo-agent.exe
+    os: windows
+    arch: amd64
+    exec: false
+    url: release://binaries/ligolo-agent_0.7.5_windows_amd64.exe

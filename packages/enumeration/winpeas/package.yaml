@@ -1,0 +1,16 @@
+name: winpeas
+category: enumeration
+version: "20240101"
+description: Windows local privilege escalation enumeration (PEASS-ng). x64 + .bat fallback.
+tags: [privesc, enum, windows, peass]
+homepage: https://github.com/peass-ng/PEASS-ng
+files:
+  - dest: winPEASx64.exe
+    os: windows
+    arch: amd64
+    exec: false
+    url: release://binaries/winPEASx64.exe
+  - dest: winPEAS.bat
+    os: windows
+    exec: false
+    url: release://binaries/winPEAS.bat
