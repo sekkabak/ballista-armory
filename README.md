@@ -84,6 +84,20 @@ Needs only `bash`, `curl`, `jq` (and optionally `gum` + `fzf` for the TUI).
    `raw://<path>`; upstream files can use a plain `https://`.
 3. Push. The GitHub Action rebuilds `index.json`. Users get it on `armory update`.
 
+## Porting the old repo + adding tooling
+
+See `docs/MIGRATION.md` for the full walkthrough. The short loop:
+
+```bash
+scripts/new-tool.sh <category> <name>     # scaffold packages/<cat>/<name>/package.yaml
+scripts/publish.sh  binaries ./yourbin    # upload heavy file -> GitHub Release, prints release:// url
+python3 scripts/build-index.py            # refresh index.json (CI also does this on push)
+git add -A && git commit -m "add <name>" && git push
+```
+
+Rule of thumb: binaries/BOFs/wordlists -> `release://` (Release assets),
+small scripts -> `raw://` (committed), upstream files -> plain `https://`.
+
 ## Hosting cbak.pl/armory
 
 Serve `bootstrap.sh` at that path. Easiest is a Cloudflare Worker / Pages
