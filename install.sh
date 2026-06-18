@@ -26,11 +26,13 @@ command -v jq   >/dev/null || say "$(c '33;1' 'note:') install 'jq' (apt install
 chmod +x "$TARGET"
 mkdir -p "$BINDIR"
 ln -sf "$TARGET" "$BINDIR/armory"
+ln -sf "$TARGET" "$BINDIR/ba"
 say "linked $(c '36;1' "$BINDIR/armory") -> $TARGET"
+say "linked $(c '36;1' "$BINDIR/ba") -> $TARGET"
 
 case ":$PATH:" in
   *":$BINDIR:"*) : ;;
   *) say "add to your shell rc:  export PATH=\"$BINDIR:\$PATH\"" ;;
 esac
 command -v gum >/dev/null 2>&1 || say "$(c '33;1' 'optional:') 'gum' + 'fzf' for the prettiest UI"
-say "done. try:  $(c '36;1' 'armory search kerberos')"
+say "done. try:  $(c '36;1' 'armory search kerberos')  (or $(c '36;1' 'ba search kerberos'))"
