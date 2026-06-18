@@ -244,7 +244,7 @@ ${C_B}usage${C_RST}  armory <command> [args]
   ${C_CY}get${C_RST}    <t...>     download tools (self-contained)  [--os all|linux|windows]
   ${C_CY}bundle${C_RST} [name]     download a themed group (no name = list bundles)
   ${C_CY}import${C_RST} <c2> <t>   wire a tool's files into sliver/adaptix
-  ${C_CY}installed${C_RST}         what you have locally
+  ${C_CY}list-got${C_RST}           what you have locally
   ${C_CY}rm${C_RST}     <tool>     remove a tool
   ${C_CY}update${C_RST}            git pull the vault (or refresh index.json)
   ${C_CY}path${C_RST}              print the bin dir to add to PATH
@@ -264,7 +264,7 @@ main() {
     get|download|add|i) cmd_get "$@" ;;
     bundle|pack)        cmd_bundle "$@" ;;
     import)             cmd_import "$@" ;;
-    installed|status)   cmd_installed ;;
+    list-got|installed|status) cmd_installed ;;
     rm|remove|uninstall)cmd_remove "$@" ;;
     path)               echo "$BIN" ;;
     root)               echo "$ARMORY_ROOT" ;;
